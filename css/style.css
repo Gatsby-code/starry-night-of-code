@@ -1,0 +1,378 @@
+/* ============================================================
+   星夜 · 代码  STARRY NIGHT OF CODE
+   夜空以《星月夜》为幕；星与线全部由 Canvas 绘制。
+   ============================================================ */
+
+:root {
+  --ink: #0a0d1c;
+  --gold: #e9c46a;
+  --gold-soft: rgba(233, 196, 106, 0.45);
+  --paper: #d8d2c4;
+  --dim: #9a96ad;
+  --line: rgba(233, 196, 106, 0.28);
+  --card-bg: rgba(10, 13, 28, 0.93);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  background: var(--ink);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.font-display {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", "Songti SC", serif;
+}
+
+/* ---------- 背景三层：画 / 纱 / 星幕 ---------- */
+
+.bg {
+  position: fixed; inset: -24px;
+  background: url("../assets/starry-night.jpg") center / cover no-repeat;
+  filter: brightness(0.52) saturate(1.08) contrast(1.02);
+  will-change: transform;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.veil {
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 108%, rgba(6, 8, 18, 0.88) 0%, rgba(6, 8, 18, 0.35) 42%, transparent 68%),
+    linear-gradient(180deg, rgba(6, 8, 18, 0.72) 0%, rgba(6, 8, 18, 0.18) 26%, rgba(6, 8, 18, 0.10) 55%, rgba(6, 8, 18, 0.66) 100%);
+}
+
+#sky { position: fixed; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+
+/* ---------- 顶栏 ---------- */
+
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 26px 12px;
+  z-index: 40;
+  background: linear-gradient(180deg, rgba(6, 8, 18, 0.55), transparent);
+}
+
+.brand h1 {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", "Songti SC", serif;
+  font-size: 27px; font-weight: 700; letter-spacing: 7px;
+  color: var(--gold);
+  text-shadow: 0 2px 18px rgba(233, 196, 106, 0.35);
+  line-height: 1.15;
+}
+
+.brand-en {
+  display: block; margin-top: 3px;
+  font-size: 10px; letter-spacing: 4.5px;
+  color: var(--dim);
+}
+
+.nav { display: flex; align-items: center; gap: 10px; position: relative; }
+
+.search-wrap { position: relative; }
+
+#searchBox {
+  width: 210px; padding: 8px 13px;
+  font-size: 13px; color: var(--paper);
+  background: rgba(8, 10, 22, 0.62);
+  border: 1px solid rgba(216, 210, 196, 0.22);
+  border-radius: 20px;
+  outline: none; user-select: text;
+  transition: border-color 0.25s, width 0.25s;
+}
+#searchBox::placeholder { color: rgba(154, 150, 173, 0.75); }
+#searchBox:focus { border-color: var(--gold-soft); width: 250px; }
+
+.search-results {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  width: 290px; max-height: 300px; overflow-y: auto;
+  background: var(--card-bg);
+  border: 1px solid rgba(233, 196, 106, 0.25);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  padding: 6px;
+}
+.search-results button {
+  display: flex; width: 100%; gap: 10px; align-items: baseline;
+  padding: 9px 11px; text-align: left;
+  background: none; border: none; border-radius: 7px;
+  color: var(--paper); font-size: 13px; cursor: pointer;
+}
+.search-results button:hover { background: rgba(233, 196, 106, 0.10); }
+.search-results .yr { color: var(--gold); font-size: 12px; min-width: 34px; }
+
+.nav-btn, .ghost-btn, .gold-btn {
+  font-family: "Noto Serif SC", "STZhongsong", "SimSun", serif;
+  font-size: 13.5px; letter-spacing: 2px;
+  padding: 8px 16px; border-radius: 20px;
+  cursor: pointer; transition: all 0.22s;
+}
+
+.nav-btn {
+  color: var(--paper);
+  background: rgba(8, 10, 22, 0.55);
+  border: 1px solid rgba(216, 210, 196, 0.22);
+}
+.nav-btn:hover { border-color: var(--gold-soft); color: var(--gold); transform: translateY(-1px); }
+
+.ghost-btn {
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid rgba(216, 210, 196, 0.22);
+}
+.ghost-btn:hover { color: var(--gold); border-color: var(--gold-soft); }
+
+.gold-btn {
+  color: #1b1508; font-weight: 700;
+  background: linear-gradient(160deg, #f2d492, #d9a941);
+  border: none;
+  box-shadow: 0 4px 18px rgba(233, 196, 106, 0.28);
+}
+.gold-btn:hover { filter: brightness(1.07); transform: translateY(-1px); }
+
+/* ---------- 悬停提示 ---------- */
+
+.tooltip {
+  position: fixed; z-index: 50;
+  pointer-events: none;
+  padding: 8px 13px;
+  background: var(--card-bg);
+  border: 1px solid rgba(233, 196, 106, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+.tooltip .t-year { color: var(--gold); font-size: 12px; letter-spacing: 1px; }
+.tooltip .t-title { font-size: 13.5px; color: var(--paper); margin-top: 2px; }
+
+/* ---------- 时代星宿栏 ---------- */
+
+.era-bar {
+  position: fixed; left: 50%; bottom: 52px;
+  transform: translateX(-50%);
+  display: flex; gap: 8px;
+  z-index: 40;
+  padding: 7px;
+  background: rgba(8, 10, 22, 0.55);
+  border: 1px solid rgba(216, 210, 196, 0.16);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.era-bar::-webkit-scrollbar { display: none; }
+
+.chip {
+  font-family: "Noto Serif SC", "STZhongsong", "SimSun", serif;
+  font-size: 13px; letter-spacing: 2px;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 7px 15px;
+  cursor: pointer; white-space: nowrap;
+  transition: all 0.22s;
+}
+.chip:hover { color: var(--gold); }
+.chip.active {
+  color: #1b1508; font-weight: 700;
+  background: linear-gradient(160deg, #f2d492, #d9a941);
+  box-shadow: 0 3px 14px rgba(233, 196, 106, 0.30);
+}
+.chip .cy { display: block; font-size: 10px; letter-spacing: 1px; opacity: 0.8; }
+
+/* ---------- 点亮进度 ---------- */
+
+.lit-count {
+  position: fixed; left: 24px; bottom: 24px;
+  z-index: 40;
+  font-size: 12.5px; letter-spacing: 1.5px;
+  color: var(--dim);
+}
+.lit-count b { color: var(--gold); font-weight: 700; }
+
+.credit {
+  position: fixed; right: 24px; bottom: 24px;
+  z-index: 40;
+  font-size: 11px; letter-spacing: 0.5px;
+  color: rgba(154, 150, 173, 0.65);
+}
+
+/* ---------- 浮层与卡片 ---------- */
+
+.overlay {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 6, 14, 0.55);
+  backdrop-filter: blur(4px);
+  padding: 20px;
+  overflow-y: auto;
+}
+.overlay[hidden] { display: none; }
+
+.card {
+  position: relative;
+  width: min(600px, 94vw);
+  max-height: 88vh; overflow-y: auto;
+  background: var(--card-bg);
+  border: 1px solid rgba(233, 196, 106, 0.26);
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(233, 196, 106, 0.10);
+  padding: 34px 38px 30px;
+  animation: cardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+.close-btn {
+  position: absolute; top: 12px; right: 14px;
+  width: 34px; height: 34px;
+  background: none; border: none;
+  color: var(--dim); font-size: 24px; line-height: 1;
+  cursor: pointer; border-radius: 50%;
+  transition: all 0.2s;
+}
+.close-btn:hover { color: var(--gold); background: rgba(233, 196, 106, 0.08); }
+
+.card h2 {
+  font-family: "Noto Serif SC", "STZhongsong", "SimSun", serif;
+  font-size: 26px; letter-spacing: 3px;
+  color: #f0ead6; margin: 10px 0 4px;
+}
+.card h3 {
+  font-family: "Noto Serif SC", "STZhongsong", "SimSun", serif;
+  font-size: 15px; letter-spacing: 2px;
+  color: var(--gold); margin-bottom: 6px;
+}
+
+.card-eyebrow { display: flex; align-items: center; gap: 12px; }
+
+.year-badge {
+  display: inline-block;
+  font-family: "Noto Serif SC", "STZhongsong", serif;
+  font-size: 14px; letter-spacing: 2px;
+  color: #1b1508; font-weight: 700;
+  background: linear-gradient(160deg, #f2d492, #d9a941);
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+
+#cardConst { font-size: 12.5px; letter-spacing: 2px; color: var(--dim); }
+
+.person { font-size: 13px; letter-spacing: 1px; color: var(--gold); margin-top: 2px; }
+
+.body-text {
+  font-size: 15px; line-height: 2.0;
+  color: var(--paper);
+  margin-top: 14px;
+  text-align: justify;
+}
+
+.card-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 26px; padding-top: 18px;
+  border-top: 1px solid rgba(216, 210, 196, 0.14);
+}
+.card-index { font-size: 12px; letter-spacing: 1px; color: var(--dim); }
+
+/* ---------- 极客试炼 ---------- */
+
+.quiz-head { display: flex; align-items: center; justify-content: space-between; }
+.quiz-head h2 { margin: 0; }
+
+.quiz-dots { display: flex; gap: 6px; }
+.quiz-dots i {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(216, 210, 196, 0.22);
+  transition: all 0.25s;
+}
+.quiz-dots i.done { background: var(--gold); }
+.quiz-dots i.wrong { background: #b3563f; }
+.quiz-dots i.now { box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.25); }
+
+.quiz-question {
+  font-family: "Noto Serif SC", "STZhongsong", "SimSun", serif;
+  font-size: 18.5px; line-height: 1.9; letter-spacing: 0.5px;
+  color: #f0ead6;
+  margin: 22px 0 20px;
+}
+
+.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quiz-options button {
+  text-align: left;
+  padding: 13px 16px;
+  font-size: 14px; line-height: 1.6;
+  color: var(--paper);
+  background: rgba(216, 210, 196, 0.05);
+  border: 1px solid rgba(216, 210, 196, 0.18);
+  border-radius: 9px;
+  cursor: pointer; transition: all 0.2s;
+}
+.quiz-options button:hover:not(:disabled) { border-color: var(--gold-soft); background: rgba(233, 196, 106, 0.07); }
+.quiz-options button.correct { border-color: #7ea35f; background: rgba(126, 163, 95, 0.16); }
+.quiz-options button.wrong { border-color: #b3563f; background: rgba(179, 86, 63, 0.14); }
+.quiz-options button:disabled { cursor: default; }
+
+.quiz-explain { margin-top: 14px; font-size: 13px; line-height: 1.8; color: var(--dim); }
+
+.quiz-result { text-align: center; padding: 12px 0 4px; }
+.result-title {
+  font-family: "Noto Serif SC", "STZhongsong", "SimSun", serif;
+  font-size: 26px; letter-spacing: 4px;
+  color: var(--gold);
+}
+.result-score { margin-top: 8px; font-size: 14px; letter-spacing: 2px; color: var(--paper); }
+.result-note { margin-top: 10px; font-size: 13px; line-height: 1.9; color: var(--dim); }
+
+.quiz-actions { display: flex; gap: 12px; justify-content: center; margin-top: 22px; }
+
+/* ---------- 关于 / 序幕 ---------- */
+
+.about-block { margin-top: 20px; }
+.about-block p { font-size: 13.5px; line-height: 1.9; color: var(--dim); text-align: justify; }
+
+.about-quote {
+  margin-top: 26px; padding-top: 18px;
+  border-top: 1px solid rgba(216, 210, 196, 0.14);
+  text-align: center;
+  font-family: "Noto Serif SC", "STZhongsong", "SimSun", serif;
+  font-size: 15px; letter-spacing: 2px; line-height: 1.9;
+  color: var(--gold);
+}
+
+.intro-card { text-align: center; width: min(520px, 92vw); }
+.intro-kicker { font-size: 11px; letter-spacing: 5px; color: var(--dim); }
+.intro-card h2 { font-size: 34px; margin-top: 14px; }
+.intro-card .body-text { text-align: center; }
+
+/* ---------- 移动端 ---------- */
+
+@media (max-width: 720px) {
+  .topbar { padding: 12px 14px 10px; flex-wrap: wrap; gap: 8px; }
+  .brand h1 { font-size: 21px; letter-spacing: 4px; }
+  .brand-en { display: none; }
+  #searchBox { width: 130px; }
+  #searchBox:focus { width: 150px; }
+  .nav { gap: 6px; }
+  .nav-btn { padding: 7px 11px; font-size: 12px; letter-spacing: 1px; }
+  .era-bar { bottom: 58px; gap: 5px; padding: 5px; }
+  .chip { padding: 6px 11px; font-size: 12px; letter-spacing: 1px; }
+  .chip .cy { display: none; }
+  .card { padding: 26px 22px 24px; }
+  .quiz-options { grid-template-columns: 1fr; }
+  .lit-count { left: 14px; bottom: 18px; font-size: 11px; }
+  .credit { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg { transition: none; }
+  .card, .overlay { animation: none; }
+}

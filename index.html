@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>星夜 · 代码 — 一幅写给计算机历史的星空图</title>
+<meta name="description" content="以梵高《星月夜》为幕，把计算机史上 46 个改变世界的瞬间化作星宿与星座。点星读史、点亮收集、极客试炼。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23e9c46a' d='M16 1l3.2 9.6L29 13l-8 6.2L24.5 30 16 23.8 7.5 30 11 19.2 3 13l9.8-2.4z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="bg" id="bg"></div>
+<div class="veil"></div>
+<canvas id="sky"></canvas>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>星夜 · 代码</h1>
+    <span class="brand-en">STARRY NIGHT OF CODE</span>
+  </div>
+  <nav class="nav">
+    <div class="search-wrap">
+      <input id="searchBox" type="text" placeholder="搜索一颗星：图灵 / 1969 / 苹果" autocomplete="off">
+      <div id="searchResults" class="search-results" hidden></div>
+    </div>
+    <button class="nav-btn" id="randomBtn" title="随机飞向一颗星">掷一颗星</button>
+    <button class="nav-btn" id="quizBtn">极客试炼</button>
+    <button class="nav-btn" id="aboutBtn">关于</button>
+  </nav>
+</header>
+
+<div id="tt" class="tooltip" hidden></div>
+
+<div id="eraBar" class="era-bar"></div>
+
+<div id="litCount" class="lit-count">已点亮 0 / 46 颗星</div>
+
+<footer class="credit">以梵高《星月夜》（1889 · 公有领域）为幕 · 图源 Wikimedia Commons</footer>
+
+<!-- 星辰卡片 -->
+<div class="overlay" id="cardModal" hidden>
+  <div class="card star-card">
+    <button class="close-btn" data-close="cardModal" aria-label="关闭">×</button>
+    <div class="card-eyebrow"><span id="cardYear" class="year-badge"></span><span id="cardConst"></span></div>
+    <h2 id="cardTitle"></h2>
+    <p id="cardPerson" class="person"></p>
+    <p id="cardText" class="body-text"></p>
+    <div class="card-nav">
+      <button class="ghost-btn" id="prevStar">← 上一颗</button>
+      <span id="cardIndex" class="card-index"></span>
+      <button class="ghost-btn" id="nextStar">下一颗 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- 极客试炼 -->
+<div class="overlay" id="quiz" hidden>
+  <div class="card quiz-card">
+    <button class="close-btn" data-close="quiz" aria-label="关闭">×</button>
+    <div class="quiz-head">
+      <h2>极客试炼</h2>
+      <div id="quizDots" class="quiz-dots"></div>
+    </div>
+    <p id="quizQuestion" class="quiz-question"></p>
+    <div id="quizOptions" class="quiz-options"></div>
+    <div id="quizResult" class="quiz-result" hidden>
+      <p class="result-title" id="resultTitle"></p>
+      <p class="result-score" id="resultScore"></p>
+      <p class="result-note" id="resultNote"></p>
+      <div class="quiz-actions">
+        <button class="gold-btn" id="copyScore">复制战绩</button>
+        <button class="ghost-btn" id="retryQuiz">再战一局</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 关于 -->
+<div class="overlay" id="about" hidden>
+  <div class="card about-card">
+    <button class="close-btn" data-close="about" aria-label="关闭">×</button>
+    <h2>关于这片星空</h2>
+    <p class="body-text">1889 年，梵高在圣雷米的病院里画下这片夜空——星云翻卷，像某种无法安放的热情。一百多年过去，另一群人也在深夜里抬头：他们写下的每一行代码、每一段算法，最终都改变了人类看世界的方式。</p>
+    <p class="body-text">这幅互动星图把计算机史上 46 个关键时刻安放进《星月夜》：五个或十个时刻连成一个星座，对应一个时代。点开一颗星，读它的故事；看过的星会被点亮——像一场安静的收集。</p>
+    <div class="about-block">
+      <h3>技术</h3>
+      <p>原生 Canvas 与 DOM，零框架、零构建、零外部依赖；46 条史实全部手工考订。点亮进度保存在你的浏览器本地。</p>
+    </div>
+    <div class="about-block">
+      <h3>素材声明</h3>
+      <p>背景为文森特·梵高《星月夜》（1889），已进入公有领域，图像来自 Wikimedia Commons。本项目代码以 MIT 协议开源。</p>
+    </div>
+    <p class="about-quote">「我梦见我的画，然后我画下我的梦。」—— 文森特 · 梵高</p>
+  </div>
+</div>
+
+<!-- 首次到访 -->
+<div class="overlay" id="intro" hidden>
+  <div class="card intro-card">
+    <p class="intro-kicker">1889 · SAINT-RÉMY-DE-PROVENCE</p>
+    <h2>星夜 · 代码</h2>
+    <p class="body-text">梵高在 1889 年画下这片夜空。一百多年后，另一群人也在夜里抬头——他们写下的每一行代码，都成了一颗星。<br><br>这片天空里有 46 颗星、6 个星座，藏着一整部计算机史。</p>
+    <div class="quiz-actions">
+      <button class="gold-btn" id="introStart">仰望星空</button>
+      <button class="ghost-btn" id="introQuiz">先来测测</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
